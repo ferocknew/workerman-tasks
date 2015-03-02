@@ -2,19 +2,17 @@
 namespace Workerman;
 
 // 定义Workerman根目录
-if(!defined('WORKERMAN_ROOT_DIR'))
-{
-    define('WORKERMAN_ROOT_DIR', realpath(__DIR__  . '/../'));
+if (!defined('WORKERMAN_ROOT_DIR')) {
+    define('WORKERMAN_ROOT_DIR', realpath(__DIR__ . '/../'));
 }
 // 包含常量定义文件
-require_once WORKERMAN_ROOT_DIR.'/Workerman/Lib/Constants.php';
+require_once WORKERMAN_ROOT_DIR . '/Workerman/Lib/Constants.php';
 
 /**
  * 自动加载类
  * @author walkor<walkor@workerman.net>
  */
-class Autoloader
-{
+class Autoloader {
     // 应用的初始化目录，作为加载类文件的参考目录
     protected static $_appInitPath = '';
 
@@ -23,9 +21,8 @@ class Autoloader
      * @param string $root_path
      * @return void
      */
-    public static function setRootPath($root_path)
-    {
-          self::$_appInitPath = $root_path;
+    public static function setRootPath($root_path) {
+        self::$_appInitPath = $root_path;
     }
 
     /**
@@ -33,29 +30,47 @@ class Autoloader
      * @param string $name
      * @return boolean
      */
-    public static function loadByNamespace($name)
-    {
+    public static function loadByNamespace($name) {
         // 相对路径
-        $class_path = str_replace('\\', DIRECTORY_SEPARATOR ,$name);
+        $class_path = str_replace('\\', DIRECTORY_SEPARATOR, $name);
         // 先尝试在应用目录寻找文件
-        $class_file = self::$_appInitPath . '/' . $class_path.'.php';
+        $class_file = self::$_appInitPath . '/' . $class_path . '.php';
         // 文件不存在，则在workerman根目录中寻找
-        if(!is_file($class_file))
-        {
+        if (!is_file($class_file)) {
             $class_file = WORKERMAN_ROOT_DIR . DIRECTORY_SEPARATOR . "$class_path.php";
         }
         // 找到文件
-        if(is_file($class_file))
-        {
+        if (is_file($class_file)) {
             // 加载
-            require_once($class_file);
-            if(class_exists($name, false))
-            {
+            require_once ($class_file);
+            if (class_exists($name, false)) {
                 return true;
             }
         }
         return false;
     }
+
+    /**
+     * 固定路径的class 类文件 以.class.php 结尾
+     * @author	jonah.fu
+     */
+    public static function base_class($name) {
+        // 相对路径
+        $class_path = str_replace('\\', DIRECTORY_SEPARATOR, $name);
+        $class_file = self::$_appInitPath . '/' . $class_path . '.class.php';
+        // echo $class_path . "\n";
+        // $path = array();
+        // $pathDir = '';
+        // $path = explode('_', $className);
+        // $arrCount = count($path) - 1;
+        // $pathDir = implode("/", array_slice($path, 0, $arrCount));
+        set_include_path($class_path);
+        spl_autoload_extensions('.class.php');
+        spl_autoload($name);
+    }
+
 }
+
+spl_autoload_register('\Workerman\Autoloader::base_class');
 // 设置类自动加载回调函数
 spl_autoload_register('\Workerman\Autoloader::loadByNamespace');
